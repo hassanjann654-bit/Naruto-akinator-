@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#111827">
+<title>Naruto Akinator</title>
+<link rel="manifest" href="manifest.json">
+<style>
+:root{color-scheme:dark;--bg:#0b1020;--panel:#151d32;--orange:#ff8b36;--gold:#ffd166;--muted:#aebbd2}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:radial-gradient(circle at top,#27375b 0,#10172b 43%,var(--bg) 78%);color:#f7f9ff;display:flex;justify-content:center;padding:20px}
+main{width:min(100%,560px);margin:auto}.brand{text-align:center;margin:10px 0 22px}.logo{font-size:46px;line-height:1.2}.eyebrow{color:var(--gold);letter-spacing:3px;font-size:12px;font-weight:800}.brand h1{margin:7px 0 5px;font-size:clamp(29px,7vw,42px)}.brand p{margin:0;color:var(--muted)}
+.card{background:rgba(21,29,50,.96);border:1px solid #34425f;border-radius:24px;padding:24px;box-shadow:0 18px 50px #0005}
+.progressrow{display:flex;justify-content:space-between;color:var(--muted);font-size:13px;margin-bottom:10px}.track{height:7px;background:#303c56;border-radius:99px;overflow:hidden;margin-bottom:24px}.bar{height:100%;width:0;background:linear-gradient(90deg,var(--orange),var(--gold));transition:width .25s}
+.tag{display:inline-block;border-radius:999px;background:#293651;color:var(--gold);padding:6px 11px;font-size:12px;font-weight:700}
+h2{font-size:clamp(22px,5vw,29px);line-height:1.25;margin:15px 0 22px}.answers{display:grid;gap:10px}.answer,.primary,.secondary{width:100%;border:0;border-radius:14px;padding:14px 16px;font-size:16px;font-weight:750;cursor:pointer;transition:transform .12s,filter .12s}.answer{background:#222e49;color:#f7f9ff;border:1px solid #3a4968;text-align:left}.answer:hover{filter:brightness(1.15);transform:translateY(-1px)}.answer span{color:var(--gold);margin-right:9px}.primary{background:linear-gradient(100deg,#ff7b35,#ffb13b);color:#1c1720;margin-top:10px}.secondary{background:transparent;color:#d8e2f5;border:1px solid #43516e;margin-top:10px}.hint{color:var(--muted);font-size:13px;text-align:center;margin:18px 0 0}.result{text-align:center}.result .emoji{font-size:76px;margin:6px}.result h2{margin:8px 0}.result p{color:#c6d1e6;line-height:1.6}.result .name{color:var(--gold)}.footer{text-align:center;color:#8492ad;font-size:12px;margin:16px 5px}.hidden{display:none!important}
+</style>
+</head>
+<body>
+<main>
+  <header class="brand">
+    <div class="logo">🍥</div><div class="eyebrow">SHINOBI GUESSING GAME</div>
+    <h1>Naruto Akinator</h1><p>Think of a character. I'll try to guess them!</p>
+  </header>
+  <section class="card" id="game">
+    <div class="progressrow"><span id="step">Question 1</span><span id="count">0 answered</span></div>
+    <div class="track"><div class="bar" id="bar"></div></div>
+    <span class="tag">🌀 MIND READING MODE</span>
+    <h2 id="question">Ready to test my ninja knowledge?</h2>
+    <div class="answers" id="answers">
+      <button class="primary" id="start">Start guessing</button>
+    </div>
+    <p class="hint" id="hint">Choose the answer that best matches your character.</p>
+  </section>
+  <section class="card result hidden" id="result">
+    <div class="tag">🎯 MY GUESS</div><div class="emoji" id="resultEmoji">🍥</div>
+    <h2>Is your character <span class="name" id="resultName">Naruto Uzumaki</span>?</h2>
+    <p id="resultDesc"></p>
+    <button class="primary" id="yes">Yes, you guessed it!</button>
+    <button class="secondary" id="no">No, try again</button>
+  </section>
+  <p class="footer">Fan-made guessing game • No account needed • Works offline after first load</p>
+</main>
+<script>
+const characters = [
+ {name:"Naruto Uzumaki",emoji:"🍥",desc:"The determined ninja who dreams of becoming Hokage.",traits:{leaf:true,hokage:true,orange:true,fox:true,team7:true,young:true,hero:true,teacher:false,uchiha:false,medical:false}},
+ {name:"Sasuke Uchiha",emoji:"⚡",desc:"A skilled Uchiha with a serious attitude and powerful eyes.",traits:{leaf:true,hokage:false,orange:false,fox:false,team7:true,young:true,hero:false,teacher:false,uchiha:true,medical:false}},
+ {name:"Sakura Haruno",emoji:"🌸",desc:"A brave kunoichi known for excellent chakra control and strength.",traits:{leaf:true,hokage:false,orange:false,fox:false,team7:true,young:true,hero:true,teacher:false,uchiha:false,medical:true}},
+ {name:"Kakashi Hatake",emoji:"📘",desc:"The calm, masked Copy Ninja who led Team 7.",traits:{leaf:true,hokage:false,orange:false,fox:false,team7:true,young:false,hero:true,teacher:true,uchiha:false,medical:false}},
+ {name:"Hinata Hyuga",emoji:"💜",desc:"A kind ninja from the Hyuga clan with the Byakugan.",traits:{leaf:true,hokage:false,orange:false,fox:false,team7:false,young:true,hero:true,teacher:false,uchiha:false,medical:false}},
+ {name:"Itachi Uchiha",emoji:"🌑",desc:"A gifted Uchiha whose story is full of difficult choices.",traits:{leaf:true,hokage:false,orange:false,fox:false,team7:false,young:false,hero:false,teacher:false,uchiha:true,medical:false}},
+ {name:"Gaara",emoji:"🏜️",desc:"The Sand Village ninja who grows into a respected leader.",traits:{leaf:false,hokage:true,orange:false,fox:false,team7:false,young:true,hero:true,teacher:false,uchiha:false,medical:false}},
+ {name:"Jiraiya",emoji:"🐸",desc:"A legendary Sannin, author, and Naruto's mentor.",traits:{leaf:true,hokage:false,orange:false,fox:false,team7:false,young:false,hero:true,teacher:true,uchiha:false,medical:false}},
+ {name:"Shikamaru Nara",emoji:"🧠",desc:"A brilliant strategist who prefers the easiest path—but helps his friends.",traits:{leaf:true,hokage:false,orange:false,fox:false,team7:false,young:true,hero:true,teacher:false,uchiha:false,medical:false}},
+ {name:"Madara Uchiha",emoji:"🔥",desc:"A legendary Uchiha with immense power and grand ambitions.",traits:{leaf:false,hokage:false,orange:false,fox:false,team7:false,young:false,hero:false,teacher:false,uchiha:true,medical:false}},
+ {name:"Rock Lee",emoji:"🥋",desc:"A hardworking taijutsu specialist who believes in effort and training.",traits:{leaf:true,hokage:false,orange:false,fox:false,team7:false,young:true,hero:true,teacher:false,uchiha:false,medical:false}},
+ {name:"Obito Uchiha",emoji:"🌀",desc:"A ninja whose life takes a dramatic and complicated turn.",traits:{leaf:true,hokage:false,orange:false,fox:false,team7:false,young:false,hero:false,teacher:false,uchiha:true,medical:false}}
+];
+const questions = [
+ {key:"leaf",text:"Is your character from the Hidden Leaf Village?",yes:"Yes",no:"No"},
+ {key:"young",text:"Are they usually shown as a young ninja?",yes:"Yes",no:"No"},
+ {key:"team7",text:"Are they a member of Team 7?",yes:"Yes",no:"No"},
+ {key:"uchiha",text:"Are they from the Uchiha clan?",yes:"Yes",no:"No"},
+ {key:"orange",text:"Are they especially known for wearing orange?",yes:"Yes",no:"No"},
+ {key:"teacher",text:"Are they known as a mentor or teacher?",yes:"Yes",no:"No"},
+ {key:"hokage",text:"Are they a leader or strongly connected to becoming a leader?",yes:"Yes",no:"No"},
+ {key:"medical",text:"Are they known for medical ninjutsu?",yes:"Yes",no:"No"},
+ {key:"fox",text:"Are they connected to the Nine-Tailed Fox?",yes:"Yes",no:"No"},
+ {key:"hero",text:"Would you describe them as a hero or ally?",yes:"Yes",no:"No"}
+];
+let asked=[], answers={}, started=false;
+const $=id=>document.getElementById(id);
+$("start").addEventListener("click",()=>{started=true;renderQuestion()});
+function candidates(){
+ return characters.map(c=>{
+   let score=0,known=0;
+   for(const [k,v] of Object.entries(answers)){if(c.traits[k]===v){score+=2;known++}else score-=1;}
+   return {c,score,known};
+ }).sort((a,b)=>b.score-a.score);
+}
+function renderQuestion(){
+ $("game").classList.remove("hidden");$("result").classList.add("hidden");
+ if(asked.length>=questions.length || (asked.length>=4 && candidates()[0].score-candidates()[1].score>=4)){showGuess();return}
+ const q=questions.find(q=>!asked.includes(q.key));
+ if(!q){showGuess();return}
+ $("step").textContent=`Question ${asked.length+1}`;$("count").textContent=`${asked.length} answered`;
+ $("bar").style.width=`${asked.length/questions.length*100}%`;
+ $("question").textContent=q.text;$("hint").textContent="Pick the closest answer. You can restart if you change your mind.";
+ $("answers").innerHTML="";
+ [[true,"Yes","✓"],[false,"No","✕"],[null,"Not sure","?" ]].forEach(([val,label,icon])=>{
+   const b=document.createElement("button");b.className="answer";b.innerHTML=`<span>${icon}</span>${label}`;
+   b.onclick=()=>{asked.push(q.key);if(val!==null)answers[q.key]=val;renderQuestion()};$("answers").appendChild(b);
+ });
+}
+function showGuess(){
+ const ranked=candidates();const chosen=ranked[0].c;
+ $("game").classList.add("hidden");$("result").classList.remove("hidden");
+ $("resultEmoji").textContent=chosen.emoji;$("resultName").textContent=chosen.name;$("resultDesc").textContent=chosen.desc;
+}
+function restart(){asked=[];answers={};started=false;$("result").classList.add("hidden");$("game").classList.remove("hidden");$("step").textContent="Ready";$("count").textContent="0 answered";$("bar").style.width="0";$("question").textContent="Ready to test my ninja knowledge?";$("answers").innerHTML='<button class="primary" id="start">Start guessing</button>';$("start").onclick=()=>{started=true;renderQuestion()};$("hint").textContent="Choose the answer that best matches your character."}
+$("yes").onclick=()=>{const name=$("resultName").textContent;$("resultDesc").textContent=`Nice! I guessed ${name}. Play again to choose another character.`;$("yes").classList.add("hidden");$("no").textContent="Play again";$("no").onclick=()=>{ $("yes").classList.remove("hidden");$("no").textContent="No, try again";$("no").onclick=()=>{restart()};restart()};};
+$("no").onclick=()=>{restart()};
+if("serviceWorker" in navigator && location.protocol.startsWith("http")){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));}
+</script>
+</body>
+</html>
